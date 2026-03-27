@@ -101,7 +101,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const data = await register(form); // Pass the entire form object
+      // Ensure companyName is sent if role is employer
+      const payload = { ...form };
+      if (form.role === "employer") {
+        payload.companyName = form.name;
+      }
+
+      const data = await register(payload);
 
       toast.success(`Welcome to JobPortal, ${data.user.name}!`);
 
