@@ -103,16 +103,26 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 // MongoDB connect
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ MongoDB error:", err.message);
+    // In production, we might not want to exit immediately if it's a transient error
+    if (process.env.NODE_ENV !== 'production') process.exit(1);
+  }
+};
+
+// Only listen if not in a serverless environment (like Vercel)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  connectDB().then(() => {
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB error:", err.message);
-    process.exit(1);
   });
+} else {
+  // On Vercel, we still need to initiate the connection
+  connectDB();
+}
 
-module.exports = { app, io };
+module.exports = app;
